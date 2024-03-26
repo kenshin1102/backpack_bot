@@ -1,25 +1,18 @@
 # backpack_exchange
 
- 要用脚本请把本文档看完
- 
- 运行命令：
- 先运行 npm install
- 后运行 node ./index.js
+### Cài đặt
 
- 先用我的邀请码注册backpack交易所：https://backpack.exchange/signup?referral=9ed76787-d966-4122-9a58-cd93d3a44de3
- 不会的用脚本的可以推特私信问我 https://twitter.com/zisan_xyz
-
- 没node的安装一下 这是教程：https://www.runoob.com/nodejs/nodejs-install-setup.html
-
- backpack 刷交易量 JavaScript 只刷sol/usdc
- 注意事项：他们官网的api太多人用比较卡，可能在交易的时候会卡住，需要自己手动停止程序，重新运行
-
- ![image](https://github.com/catsats/backpack_exchange/assets/154321884/61503391-05ad-44d3-a121-6e6393907245)
-
- 脚本运行详细：每次兑换一半余额的SOL换成USDC，再把所有USDC换成SOL。
-
- 运行脚本需要把api keys填入进去
- ![image](https://github.com/catsats/backpack_exchange/assets/154321884/52850aab-6b10-4678-93d6-4b56d2be2449)
-
-在这创建你的api keys https://backpack.exchange/settings/api-keys
-![image](https://github.com/catsats/backpack_exchange/assets/154321884/9afa6f34-6d8f-495c-b6b7-e43c7f18cff5)
+1. Cài đặt nodejs trên máy tính
+ - Vào link https://nodejs.org/en/download, donwload phiên bản mới nhất về cài vào máy như cài phần mềm thông thường
+2. Cài đặt git bash để chạy lệnh node
+ - Vào link https://git-scm.com/download/win download `gitbash` về cài như một phần mềm thông thường
+3. Đăng ký tài khoản BackPack nếu ai chưa có
+- Vào link https://backpack.exchange/refer/ken (mình xin 1 ref), rồi đăng ký tài khoản, sàn này bắt KYC bằng căn cước công dân (tầm 1,2 phút là xong),
+- Sau khi đăng ký xong vào link https://backpack.exchange/settings/api-keys để tạo API Key, chọn `New API key`, nhập tên rồi ấn `Generate` rồi nó đưa cho một cặp key, lưu cái cặp này lại nhé, tẹo dùng. Nhớ lưu lại chứ tẹo nó không show cho để copy đâu.
+4. Download code từ github về máy
+- Vào link https://github.com/kenshin1102/backpack_bot, chọn `code` -> `download zip` để tải code về, sau đó giải nén file này ra
+5. Cài đặt code
+- Vào thư mục code vừa giải nén, ấn chuột phải, chọn `git bash here` rồi gõ `npm install`
+- Mở file `index.js` để chạy cặp SOL_USDC hoặc `index_wen.js` để chạy cặp WEN_USDC, tìm đến dòng `apisecret` và `apikey` để thay 2 cặp key lấy được ở bước 3 vào.
+6. Chạy bot
+- Trên terminal của git bash (chỗ vừa gõ npm install), gõ lệnh `node index.js` hoặc `node index_wen.js` để chạy bot

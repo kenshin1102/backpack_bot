@@ -94,16 +94,16 @@ const sellfun = async (client) => {
         orderType: "Limit",
         price: lastPriceask.toString(),
         quantity: quantitys,
-        side: "Ask", //卖
+        side: "Ask",
         symbol: "SOL_USDC",
         timeInForce: "IOC"
     })
 
-    if (orderResultAsk?.status == "Filled" && orderResultAsk?.side == "Ask") {
+    if (orderResultAsk?.status === "Filled" && orderResultAsk?.side === "Ask") {
         console.log(getNowFormatDate(), "Sold successfully");
         sellbuy += 1;
         console.log(getNowFormatDate(), "order details:", `selling price:${orderResultAsk.price}, Sell quantity:${orderResultAsk.quantity}, order number:${orderResultAsk.id}`);
-        init(client);
+        await init(client);
     } else {
         console.log(getNowFormatDate(), "Selling failed");
         throw new Error("Selling failed");
@@ -114,7 +114,8 @@ const buyfun = async (client) => {
     //Cancel all outstanding orders
     let GetOpenOrders = await client.GetOpenOrders({symbol: "SOL_USDC"});
     if (GetOpenOrders.length > 0) {
-        let CancelOpenOrders = await client.CancelOpenOrders({symbol: "SOL_USDC"});
+        await delay(10000);
+        await client.CancelOpenOrders({symbol: "SOL_USDC"});
         console.log(getNowFormatDate(), "All pending orders canceled");
     } else {
         console.log(getNowFormatDate(), "The account order is normal and there is no need to cancel the pending order.");
@@ -134,11 +135,11 @@ const buyfun = async (client) => {
         orderType: "Limit",
         price: lastPrice.toString(),
         quantity: quantitys,
-        side: "Bid", //买
+        side: "Bid",
         symbol: "SOL_USDC",
         timeInForce: "IOC"
     })
-    if (orderResultBid?.status == "Filled" && orderResultBid?.side == "Bid") {
+    if (orderResultBid?.status === "Filled" && orderResultBid?.side === "Bid") {
         console.log(getNowFormatDate(), "successfully ordered");
         successbuy += 1;
         console.log(getNowFormatDate(), "successfully ordered:", `price:${orderResultBid.price}, Purchase quantity:${orderResultBid.quantity}, order number:${orderResultBid.id}`);
@@ -150,8 +151,8 @@ const buyfun = async (client) => {
 }
 
 (async () => {
-    const apisecret = "";
-    const apikey = "";
+    const apisecret = "THAY_API_SECRET_VAO_DAY";
+    const apikey = "THAY_API_KEY_VAO_DAY";
     const client = new backpack_client_1.BackpackClient(apisecret, apikey);
     await init(client);
 })()

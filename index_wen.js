@@ -145,7 +145,7 @@ const buyfun = async (client) => {
         console.log(getNowFormatDate(), "successfully ordered");
         successbuy += 1;
         console.log(getNowFormatDate(), "successfully ordered:", `price:${orderResultBid.price}, Purchase quantity:${orderResultBid.quantity}, order number:${orderResultBid.id}`);
-        init(client);
+        await init(client);
     } else {
         console.log(getNowFormatDate(), "Order failed");
         throw new Error("Buy failed");
@@ -153,8 +153,8 @@ const buyfun = async (client) => {
 }
 
 (async () => {
-    const apisecret = "";
-    const apikey = "";
+    const apisecret = "THAY_API_SECRET_VAO_DAY";
+    const apikey = "THAY_API_KEY_VAO_DAY";
     const client = new backpack_client_1.BackpackClient(apisecret, apikey);
     await init(client);
 })()
