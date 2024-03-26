@@ -8,7 +8,6 @@ function delay(ms) {
     });
 }
 
-//当前年份日期时分秒
 function getNowFormatDate() {
     var date = new Date();
     var seperator1 = "-";
