@@ -1,4 +1,4 @@
-# backpack_exchange
+# Backpack exchange bot
 
 ### Cài đặt
 
