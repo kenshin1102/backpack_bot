@@ -89,7 +89,7 @@ const sellfun = async (client) => {
     console.log(getNowFormatDate(), "Getting the current market price of sol_usdc...");
     //Get current
     let {lastPrice: lastPriceask} = await client.Ticker({symbol: "SOL_USDC"});
-    const askSellPrice = (lastPriceask - 0.01).toFixed(2);
+    const askSellPrice = (lastPriceask - 0.05).toFixed(2);
     console.log(getNowFormatDate(), "Current market price of sol_usdc:", lastPriceask);
     console.log(getNowFormatDate(), "askSellPrice of sol_usdc:", askSellPrice);
     let quantitys = (userbalance2.SOL.available - 0.05).toFixed(2).toString();
@@ -132,7 +132,7 @@ const buyfun = async (client) => {
     console.log(getNowFormatDate(), "Getting the current market price of sol_usdc...");
     //获取当前
     let {lastPrice} = await client.Ticker({symbol: "SOL_USDC"});
-    const askBuyPrice = (lastPrice + 0.01).toFixed(2);
+    const askBuyPrice = (lastPrice + 0.05).toFixed(2);
     console.log(getNowFormatDate(), "Current market price of sol_usdc:", lastPrice);
     console.log(getNowFormatDate(), "askBuyPrice sol_usdc:", askBuyPrice);
     console.log(getNowFormatDate(), `Buying now... ${(userbalance.USDC.available - 2).toFixed(2).toString()}, Buy SOL with USDC`);
@@ -158,7 +158,8 @@ const buyfun = async (client) => {
 }
 
 (async () => {
-
+    const apisecret = "banAMbInuFE64O63sMR1d7BCNz2B3cN/M5bojop8Xi4=";
+    const apikey = "BGkFDS/3Ps91tvbK17uHAWC9aZRwOTASuzrf/icTqNY=";
     const client = new backpack_client_1.BackpackClient(apisecret, apikey);
     await init(client);
 })()
