@@ -15,4 +15,4 @@
 - Vào thư mục code vừa giải nén, ấn chuột phải, chọn `git bash here` rồi gõ `npm install`
 - Mở file `index.js` để chạy cặp SOL_USDC hoặc `index_wen.js` để chạy cặp WEN_USDC, tìm đến dòng `apisecret` và `apikey` để thay 2 cặp key lấy được ở bước 3 vào.
 6. Chạy bot
-- Trên terminal của git bash (chỗ vừa gõ npm install), gõ lệnh `node index.js` hoặc `node index_wen.js` để chạy bot
+- Trên terminal của git bash (chỗ vừa gõ npm install), gõ lệnh `node index.js` để chạy bot
