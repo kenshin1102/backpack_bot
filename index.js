@@ -1,165 +1,162 @@
 "use strict";
-Object.defineProperty(exports, "__esModule", {value: true});
-const backpack_client_1 = require("./backpack_client");
+Object.defineProperty(exports, "__esModule", { value: true });
 
-function delay(ms) {
-    return new Promise(resolve => {
-        setTimeout(resolve, ms);
-    });
-}
+// Load environment variables from .env
+require("dotenv").config();
+const { BackpackClient } = require("./backpack_client");
+const moment = require("moment");
 
-//当前年份日期时分秒
-function getNowFormatDate() {
-    var date = new Date();
-    var seperator1 = "-";
-    var seperator2 = ":";
-    var month = date.getMonth() + 1;
-    var strDate = date.getDate();
-    var strHour = date.getHours();
-    var strMinute = date.getMinutes();
-    var strSecond = date.getSeconds();
-    if (month >= 1 && month <= 9) {
-        month = "0" + month;
-    }
-    if (strDate >= 0 && strDate <= 9) {
-        strDate = "0" + strDate;
-    }
-    if (strHour >= 0 && strHour <= 9) {
-        strHour = "0" + strHour;
-    }
-    if (strMinute >= 0 && strMinute <= 9) {
-        strMinute = "0" + strMinute;
-    }
-    if (strSecond >= 0 && strSecond <= 9) {
-        strSecond = "0" + strSecond;
-    }
-    return date.getFullYear() + seperator1 + month + seperator1 + strDate
-        + " " + strHour + seperator2 + strMinute
-        + seperator2 + strSecond;
-}
+// Config from .env
+const API_KEY = process.env.API_KEY;
+const API_SECRET = process.env.API_SECRET;
+const SYMBOL = process.env.SYMBOL;
 
-let successbuy = 0;
-let sellbuy = 0;
+// Constants
+const USDC_THRESHOLD = 5;
+const DELAY_MS = {
+    SHORT: 3000, // 3 giây
+    LONG: 10000, // 10 giây
+};
 
-const init = async (client) => {
+// Global counters
+let successfulBuys = 0;
+let successfulSells = 0;
+
+// Utility functions
+const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const getTimestamp = () => moment().format("YYYY-MM-DD HH:mm:ss");
+
+// Main bot logic
+const runBot = async (client) => {
     try {
-        console.log(`Number of successful purchases: ${successbuy}, Number of successful sales: ${sellbuy}`);
-        if (successbuy !== 0 || sellbuy !== 0) {
-            // console.log(getNowFormatDate(), `success buy = ${successbuy}, sellbuy = ${sellbuy}`);
-            console.log(`By success, End bot`);
-            return;
-            await delay(3000);
+        console.log(`Successful Buys: ${successfulBuys}, Successful Sells: ${successfulSells}`);
+
+        if (successfulBuys > 0 || successfulSells > 0) {
+            console.log(`${getTimestamp()} Completed trades: Buys=${successfulBuys}, Sells=${successfulSells}`);
+            await delay(DELAY_MS.SHORT);
         }
 
-        console.log(getNowFormatDate(), "Retrieving account information...");
-        let userbalance = await client.Balance();
-        console.log('userbalance =' + userbalance)
-        //Determine whether the account USDC balance is greater than 5
-        if (userbalance?.USDC?.available > 5) {
-            console.log('start buy ....')
-            await buyfun(client);
+        // Fetch account balance
+        console.log(`${getTimestamp()} Fetching account balance...`);
+        const balance = await client.Balance();
+        const usdcBalance = Number(balance?.USDC?.available) || 0;
+        console.log(`${getTimestamp()} USDC Balance: ${usdcBalance}`);
+
+        // Decide to buy or sell based on USDC balance
+        if (usdcBalance > USDC_THRESHOLD) {
+            console.log(`${getTimestamp()} Starting buy process...`);
+            await executeBuy(client);
         } else {
-            console.log('start sell ....')
-            await sellfun(client);
+            console.log(`${getTimestamp()} Starting sell process...`);
+            await executeSell(client);
         }
-    } catch (e) {
-        console.log(getNowFormatDate(), "The pending order failed, the order is being placed again end script ....");
-        console.log(getNowFormatDate(), "wait 10 seconds...");
-        await delay(3000);
-        await init(client)
+    } catch (error) {
+        console.error(`${getTimestamp()} Order failed: ${error.message}`);
+        console.log(`${getTimestamp()} Retrying in ${DELAY_MS.SHORT / 1000} seconds...`);
+        await delay(DELAY_MS.SHORT);
+        await runBot(client);
     }
-}
+};
 
-
-const sellfun = async (client) => {
-    //Cancel all outstanding orders
-    let GetOpenOrders = await client.GetOpenOrders({symbol: "SOL_USDC"});
-    if (GetOpenOrders.length > 0) {
-        console.log(getNowFormatDate(), "wait 10 seconds before cancel order ...");
-        await delay(10000);
-        await client.CancelOpenOrders({symbol: "SOL_USDC"});
-        console.log(getNowFormatDate(), "All pending orders canceled");
+// Sell function
+const executeSell = async (client) => {
+    // Cancel any open orders
+    const openOrders = await client.GetOpenOrders({ symbol: SYMBOL });
+    if (openOrders.length > 0) {
+        console.log(`${getTimestamp()} Found ${openOrders.length} open orders, cancelling in ${DELAY_MS.LONG / 1000} seconds...`);
+        await delay(DELAY_MS.LONG);
+        await client.CancelOpenOrders({ symbol: SYMBOL });
+        console.log(`${getTimestamp()} All open orders cancelled`);
     } else {
-        console.log(getNowFormatDate(), "The account order is normal and there is no need to cancel the pending order.");
+        console.log(`${getTimestamp()} No open orders to cancel`);
     }
-    console.log(getNowFormatDate(), "Retrieving account information...");
-    //Get account information
-    let userbalance2 = await client.Balance();
-    console.log(getNowFormatDate(), "account information:", userbalance2);
-    console.log(getNowFormatDate(), "Getting the current market price of sol_usdc...");
-    //Get current
-    let {lastPrice: lastPriceask} = await client.Ticker({symbol: "SOL_USDC"});
-    const askSellPrice = (lastPriceask - 0.05).toFixed(2);
-    console.log(getNowFormatDate(), "Current market price of sol_usdc:", lastPriceask);
-    console.log(getNowFormatDate(), "askSellPrice of sol_usdc:", askSellPrice);
-    let quantitys = (userbalance2.SOL.available - 0.05).toFixed(2).toString();
-    console.log(getNowFormatDate(), `Selling... ${quantitys}个SOL`);
 
-    let orderResultAsk = await client.ExecuteOrder({
+    // Fetch balance and price
+    console.log(`${getTimestamp()} Fetching account balance and market price...`);
+    const balance = await client.Balance();
+    const ticker = await client.Ticker({ symbol: SYMBOL });
+    const lastPrice = parseFloat(ticker.lastPrice);
+    const sellPrice = (lastPrice - 0.05).toFixed(2);
+    const quantity = (balance.SOL.available - 0.05).toFixed(2);
+
+    console.log(`${getTimestamp()} Market Price: ${lastPrice}, Sell Price: ${sellPrice}, Quantity: ${quantity} SOL`);
+
+    // Place sell order
+    console.log(`${getTimestamp()} Placing sell order for ${quantity} SOL...`);
+    const orderResult = await client.ExecuteOrder({
         orderType: "Limit",
-        price: askSellPrice.toString(),
-        quantity: quantitys,
+        price: sellPrice,
+        quantity: quantity,
         side: "Ask",
-        symbol: "SOL_USDC",
-        timeInForce: "IOC"
-    })
+        symbol: SYMBOL,
+        timeInForce: "IOC",
+    });
 
-    if (orderResultAsk?.status === "Filled" && orderResultAsk?.side === "Ask") {
-        console.log(getNowFormatDate(), "Sold successfully");
-        sellbuy += 1;
-        console.log(getNowFormatDate(), "order details:", `selling price:${orderResultAsk.price}, Sell quantity:${orderResultAsk.quantity}, order number:${orderResultAsk.id}`);
-        await init(client);
+    // Check order result
+    if (orderResult?.status === "Filled" && orderResult?.side === "Ask") {
+        successfulSells += 1;
+        console.log(`${getTimestamp()} Sell successful! Price: ${orderResult.price}, Quantity: ${orderResult.quantity}, Order ID: ${orderResult.id}`);
+        await runBot(client);
     } else {
-        console.log(getNowFormatDate(), "Selling failed");
+        console.error(`${getTimestamp()} Sell failed, retrying in ${DELAY_MS.SHORT / 1000} seconds...`);
         throw new Error("Selling failed");
     }
-}
+};
 
-const buyfun = async (client) => {
-    //Cancel all outstanding orders
-    let GetOpenOrders = await client.GetOpenOrders({symbol: "SOL_USDC"});
-    if (GetOpenOrders.length > 0) {
-        await delay(10000);
-        await client.CancelOpenOrders({symbol: "SOL_USDC"});
-        console.log(getNowFormatDate(), "All pending orders canceled");
+// Buy function
+const executeBuy = async (client) => {
+    // Cancel any open orders
+    const openOrders = await client.GetOpenOrders({ symbol: SYMBOL });
+    if (openOrders.length > 0) {
+        console.log(`${getTimestamp()} Found ${openOrders.length} open orders, cancelling in ${DELAY_MS.LONG / 1000} seconds...`);
+        await delay(DELAY_MS.LONG);
+        await client.CancelOpenOrders({ symbol: SYMBOL });
+        console.log(`${getTimestamp()} All open orders cancelled`);
     } else {
-        console.log(getNowFormatDate(), "The account order is normal and there is no need to cancel the pending order.");
+        console.log(`${getTimestamp()} No open orders to cancel`);
     }
-    console.log(getNowFormatDate(), "Retrieving account information...");
-    //获取账户信息
-    let userbalance = await client.Balance();
-    console.log(getNowFormatDate(), "account information:", userbalance);
-    console.log(getNowFormatDate(), "Getting the current market price of sol_usdc...");
-    //获取当前
-    let {lastPrice} = await client.Ticker({symbol: "SOL_USDC"});
-    const askBuyPrice = (lastPrice + 0.05).toFixed(2);
-    console.log(getNowFormatDate(), "Current market price of sol_usdc:", lastPrice);
-    console.log(getNowFormatDate(), "askBuyPrice sol_usdc:", askBuyPrice);
-    console.log(getNowFormatDate(), `Buying now... ${(userbalance.USDC.available - 2).toFixed(2).toString()}, Buy SOL with USDC`);
-    let quantitys = ((userbalance.USDC.available - 2) / askBuyPrice).toFixed(2).toString();
-    console.log("quantitys = ", quantitys);
-    let orderResultBid = await client.ExecuteOrder({
+
+    // Fetch balance and price
+    console.log(`${getTimestamp()} Fetching account balance and market price...`);
+    const balance = await client.Balance();
+    const ticker = await client.Ticker({ symbol: SYMBOL });
+    const lastPrice = parseFloat(ticker.lastPrice);
+    const buyPrice = (lastPrice + 0.05).toFixed(2);
+    const usdcToSpend = (balance.USDC.available - 2).toFixed(2);
+    const quantity = (usdcToSpend / buyPrice).toFixed(2);
+
+    console.log(`${getTimestamp()} Market Price: ${lastPrice}, Buy Price: ${buyPrice}, USDC to Spend: ${usdcToSpend}, Quantity: ${quantity} SOL`);
+
+    // Place buy order
+    console.log(`${getTimestamp()} Placing buy order for ${quantity} SOL...`);
+    const orderResult = await client.ExecuteOrder({
         orderType: "Limit",
-        price: askBuyPrice.toString(),
-        quantity: quantitys,
+        price: buyPrice,
+        quantity: quantity,
         side: "Bid",
-        symbol: "SOL_USDC",
-        timeInForce: "IOC"
-    })
-    if (orderResultBid?.status === "Filled" && orderResultBid?.side === "Bid") {
-        console.log(getNowFormatDate(), "successfully ordered");
-        successbuy += 1;
-        console.log(getNowFormatDate(), "successfully ordered:", `price:${orderResultBid.price}, Purchase quantity:${orderResultBid.quantity}, order number:${orderResultBid.id}`);
-        await init(client);
+        symbol: SYMBOL,
+        timeInForce: "IOC",
+    });
+
+    // Check order result
+    if (orderResult?.status === "Filled" && orderResult?.side === "Bid") {
+        successfulBuys += 1;
+        console.log(`${getTimestamp()} Buy successful! Price: ${orderResult.price}, Quantity: ${orderResult.quantity}, Order ID: ${orderResult.id}`);
+        await runBot(client);
     } else {
-        console.log(getNowFormatDate(), "Order failed");
+        console.error(`${getTimestamp()} Buy failed:`, orderResult);
         throw new Error("Buy failed");
     }
-}
+};
 
+// Start the bot
 (async () => {
-    const apisecret = "banAMbInuFE64O63sMR1d7BCNz2B3cN/M5bojop8Xi4=";
-    const apikey = "BGkFDS/3Ps91tvbK17uHAWC9aZRwOTASuzrf/icTqNY=";
-    const client = new backpack_client_1.BackpackClient(apisecret, apikey);
-    await init(client);
-})()
+    // Validate environment variables
+    if (!API_KEY || !API_SECRET || !SYMBOL) {
+        console.error("Missing required environment variables: API_KEY, API_SECRET, or SYMBOL");
+        process.exit(1);
+    }
+
+    const client = new BackpackClient(API_SECRET, API_KEY);
+    await runBot(client);
+})();
